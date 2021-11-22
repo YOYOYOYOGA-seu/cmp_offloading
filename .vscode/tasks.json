@@ -1,0 +1,49 @@
+{
+  // See https://go.microsoft.com/fwlink/?LinkId=733558
+  // for the documentation about the tasks.json format
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build server",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "server",
+        "-j"
+      ],
+      "group": "build",
+    },
+    {
+      "label": "build client",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "client",
+        "-j"
+      ],
+      "group": "build",
+    },
+    {
+      "label": "build server-debug",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "server",
+        "DEBUG=-g",
+        "-j"
+      ],
+      "group": "build",
+    },
+    {
+      "label": "build client-debug",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "client",
+        "DEBUG=-g",
+        "-j"
+      ],
+      "group": "build",
+    }
+  ]
+}

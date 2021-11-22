@@ -1,0 +1,4 @@
+**/obj/*
+**/*.elf
+**/__pycache__/*
+./server/output/scripts/**
