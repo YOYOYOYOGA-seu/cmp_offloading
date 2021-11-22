@@ -1,10 +1,10 @@
 /*
  * @Author Shi Zhangkun
  * @Date 2021-09-16 13:55:47
- * @LastEditTime 2021-11-22 17:24:45
+ * @LastEditTime 2021-11-22 18:58:30
  * @LastEditors Shi Zhangkun
  * @Description none
- * @FilePath /client/src/cmpOffloading.cpp
+ * @FilePath /cmp_offloading/client/src/cmpOffloading.cpp
  */
 #include "cmpOffloading.h"
 #include <chrono>
@@ -20,7 +20,7 @@
 #include <unistd.h>
 #include <fstream>
 #include <sstream>
-#include "CJsonObject.hpp"
+#include "CJsonObject/CJsonObject.hpp"
 #include "cmpOffProto.hpp"
 #include "base64.h"
 #define CENTER_SCHEDER_PORT 1120
@@ -450,10 +450,19 @@ cptResultCode_t CmpOffloadingCil::exec(std::map<std::string,const CComVar*>& inp
   return EXEC_FAILURE;
 }
 
+/**
+ * @brief  
+ * @note  
+ * @param {CJsonObject} inputs
+ * @param {string} path
+ * @param {string} script
+ * @param {string&} ret
+ * @retval none
+ */
 bool CmpOffloadingCil::execLocally(neb::CJsonObject inputs, std::string path, std::string script, std::string& ret)
 {
   neb::CJsonObject json;
-  std::string from = "localhost";
+  std::string from = "127.0.0.1";
   std::string fileUrl = path + script;
   if(access(fileUrl.c_str(), F_OK) < 0)
   {

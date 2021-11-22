@@ -1,10 +1,10 @@
 /*
  * @Author Shi Zhangkun
  * @Date 2021-02-04 11:14:24
- * @LastEditTime 2021-10-22 15:43:48
+ * @LastEditTime 2021-11-22 19:03:14
  * @LastEditors Shi Zhangkun
  * @Description none
- * @FilePath /client/main.cpp
+ * @FilePath /cmp_offloading/client/main.cpp
  */
 #include <map>
 #include <string>
@@ -78,9 +78,10 @@ int main(int args, const char** argv){
   std::vector<std::string> strVect = {"hello world", " 22222"};
   std::map<std::string, const CComVar*> inputs = {{"dev-testInt", &test1},{"dev-testStr", &test2}};
   test2.setValue(strVect);
-  cli.reFreshServIP();
+  
   for (int i = 0; i <= counts; i++)
   { 
+    cli.reFreshServIP();
     if(cli.exec(inputs, outputs, name, path) == SUCCESS_WITH_DATA_CHANGE)
     {
       std::cout << "exec results (" << i << "):" << std::endl;

@@ -1,20 +1,20 @@
 /*
  * @Author Shi Zhangkun
  * @Date 2021-09-15 15:19:44
- * @LastEditTime 2021-11-22 17:17:46
+ * @LastEditTime 2021-11-22 18:51:34
  * @LastEditors Shi Zhangkun
  * @Description none
- * @FilePath /client/inc/cmpOffloading.h
+ * @FilePath /cmp_offloading/client/inc/cmpOffloading.h
  */
 #ifndef __CMPOFFLOADING_H
 #define __CMPOFFLOADING_H
-#include <hiredis.h>
+#include <hiredis/hiredis.h>
 #include <netinet/in.h>
 #include <string>
 #include <shared_mutex>
 #include <vector>
 #include <map>
-#include "CJsonObject.hpp"
+#include "CJsonObject/CJsonObject.hpp"
 #include "edgeCptFunc.h"
 #include "cmpOffProto.hpp"
 #include "common.h"

@@ -1,10 +1,10 @@
 /*
  * @Author Shi Zhangkun
  * @Date 2021-09-24 20:05:39
- * @LastEditTime 2021-11-17 18:31:27
+ * @LastEditTime 2021-11-22 18:42:31
  * @LastEditors Shi Zhangkun
  * @Description none
- * @FilePath /server/scriptsRunner/pythonRunner.cpp
+ * @FilePath /cmp_offloading/scriptsRunner/pythonRunner.cpp
  */
 #if  defined (__arm__)
 #include "python3.5m/Python.h"
@@ -14,7 +14,7 @@
 #include <fstream>
 #include <unistd.h>
 #include <fcntl.h>
-#include "CJsonObject.hpp"
+#include "CJsonObject/CJsonObject.hpp"
 #include "base64.h"
 #include <string>
 #include <vector>
@@ -160,7 +160,7 @@ int main(int args, const char** argv)
           case 'L':
             for (int i = 0; i < size; i++)
             {
-              long temp;
+              int64_t temp;
               value.Get(i, temp);
               PyList_SetItem(list, i, Py_BuildValue("l", temp));
             }

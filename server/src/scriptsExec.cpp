@@ -10,7 +10,7 @@
 #include <fstream>
 #include <unistd.h>
 #include <fcntl.h>
-#include "CJsonObject.hpp"
+#include "CJsonObject/CJsonObject.hpp"
 #include "eventHandler.h"
 #include "base64.h"
 #include <wait.h>
