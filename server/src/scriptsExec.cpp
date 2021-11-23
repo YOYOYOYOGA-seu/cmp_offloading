@@ -1,10 +1,10 @@
 /*
  * @Author Shi Zhangkun
  * @Date 2021-09-13 16:31:10
- * @LastEditTime 2021-11-17 18:28:14
+ * @LastEditTime 2021-11-23 16:57:13
  * @LastEditors Shi Zhangkun
  * @Description none
- * @FilePath /server/src/scriptsExec.cpp
+ * @FilePath /cmp_offloading/server/src/scriptsExec.cpp
  */
 
 #include <fstream>
@@ -20,7 +20,7 @@
  * @brief  
  * @note  
  * @param {string} input : 输入json串，格式{"script":"aaa.py", "inputs":[{"name":"xxx", "type":"l", "value":123}]}}
- * @param {string} from : 来自边缘设备的ip
+ * @param {string} from : 来自边缘设备的URL
  * @retval none
  */
 EventHandlerCMD::ExecStatus EventHandlerCMD::exec(std::string input, std::string from, std::string& ret)
@@ -28,8 +28,15 @@ EventHandlerCMD::ExecStatus EventHandlerCMD::exec(std::string input, std::string
   neb::CJsonObject json;
   std::string scriptName;
   std::string scriptPath;
+  std::string ip;
+
   if (!json.Parse(input) || !json.Get("script", scriptName)) return EXEC_INPUT_FMT_ERR;
 
+  for (auto& c : from)
+  {
+    if (c == ':') break;
+    ip.push_back(c);
+  }
   scriptPath = scriptsCacheDir;
   scriptPath += from + '/';
   {
@@ -49,7 +56,7 @@ EventHandlerCMD::ExecStatus EventHandlerCMD::exec(std::string input, std::string
     cmd += formatJson + ' ';
     cmd += scriptPath + ' ';
     cmd += scriptName + ' ';
-    cmd += from;
+    cmd += ip;
     auto fp = popen(cmd.c_str(), "r");
     if(fp){
       
