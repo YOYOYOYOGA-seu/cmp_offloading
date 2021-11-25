@@ -1,7 +1,7 @@
 /*
  * @Author Shi Zhangkun
  * @Date 2021-09-15 15:19:44
- * @LastEditTime 2021-11-22 18:51:34
+ * @LastEditTime 2021-11-25 16:17:42
  * @LastEditors Shi Zhangkun
  * @Description none
  * @FilePath /cmp_offloading/client/inc/cmpOffloading.h
@@ -27,10 +27,11 @@ private:
 
   unsigned int lastTimeCost = -1; //上次执行耗时（-1代表失败）
   bool execLocally(neb::CJsonObject inputs, std::string path, std::string script, std::string& ret);
-  bool sendPack(ProPack& pack, struct timeval timeo);
+  bool sendPack(int& fd, ProPack& pack, struct timeval timeo);
   bool sendScript(std::string& path, std::string& script, std::string prefix);
   bool connectToCenterServ();
   bool connectToServ();
+  bool __connect(int& fd, in_addr_t ip);
   CmpOffloadingCil(const CmpOffloadingCil& cli)  = delete;
   CmpOffloadingCil& operator=(const CmpOffloadingCil& cli) = delete;
 public:

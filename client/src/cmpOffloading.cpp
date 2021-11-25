@@ -1,7 +1,7 @@
 /*
  * @Author Shi Zhangkun
  * @Date 2021-09-16 13:55:47
- * @LastEditTime 2021-11-22 18:58:30
+ * @LastEditTime 2021-11-25 17:03:16
  * @LastEditors Shi Zhangkun
  * @Description none
  * @FilePath /cmp_offloading/client/src/cmpOffloading.cpp
@@ -109,7 +109,7 @@ CmpOffloadingCil::~CmpOffloadingCil()
  */
 bool CmpOffloadingCil::connectToCenterServ()
 {
-  return false;
+  return __connect(centerServfd, centerServIp);
 }
 
 /**
@@ -120,18 +120,28 @@ bool CmpOffloadingCil::connectToCenterServ()
  */
 bool CmpOffloadingCil::connectToServ()
 {
-  if (servfd > 0) return true;
-  if (servIP == 0) return false;
+  return __connect(servfd, servIP);
+}
+/**
+ * @brief  
+ * @note  
+ * @param {*}
+ * @retval none
+ */
+bool CmpOffloadingCil::__connect(int& fd, in_addr_t ip)
+{
+  if (fd > 0) return true;
+  if (ip == 0) return false;
   struct sockaddr_in  addr;
   addr.sin_family = AF_INET;
-  addr.sin_addr.s_addr = servIP;
+  addr.sin_addr.s_addr = ip;
   addr.sin_port = htons(OFD_SERV_PORT);
-  servfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-  if (servfd <= 0) return false;
+  fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+  if (fd <= 0) return false;
 
-  if(fd_setNoBlock(servfd))
+  if(fd_setNoBlock(fd))
   {
-    auto ret = connect(servfd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr));
+    auto ret = connect(fd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr));
     if (ret == 0) 
     {
       return true;
@@ -142,22 +152,22 @@ bool CmpOffloadingCil::connectToServ()
       fd_set fdw;
       int err;
       FD_ZERO(&fdw);
-      FD_SET(servfd,&fdw);
+      FD_SET(fd,&fdw);
       timeo.tv_sec = 1;
       timeo.tv_usec = 0;
       // 判断是否连接成功，超时时间为1s
-      if(select(servfd + 1, nullptr, &fdw, nullptr, &timeo) > 0)
+      if(select(fd + 1, nullptr, &fdw, nullptr, &timeo) > 0)
       {
         socklen_t error_len = sizeof(int);
-        if(FD_ISSET(servfd,&fdw) && getsockopt(servfd, SOL_SOCKET, SO_ERROR, &err, &error_len) == 0 && err == 0)
+        if(FD_ISSET(fd,&fdw) && getsockopt(fd, SOL_SOCKET, SO_ERROR, &err, &error_len) == 0 && err == 0)
           return true;
         err = 0;
       }
     }
   }
 
-  close(servfd);
-  servfd = -1;
+  close(fd);
+  fd = -1;
   return false;
 
 }
@@ -168,32 +178,32 @@ bool CmpOffloadingCil::connectToServ()
  * @param {timeval} timeo
  * @retval none
  */
-bool CmpOffloadingCil::sendPack(ProPack& pack, struct timeval timeo)
+bool CmpOffloadingCil::sendPack(int& fd, ProPack& pack, struct timeval timeo)
 {
   std::deque<unsigned char> recvBuf;
-  auto ret = write(servfd, pack.package().data(), pack.package().size());
+  auto ret = write(fd, pack.package().data(), pack.package().size());
   if (ret < 0)
   {
-    close(servfd);
-    servfd = -1;
+    close(fd);
+    fd = -1;
     return false;
   }
 
   fd_set fdw;
   FD_ZERO(&fdw);
-  FD_SET(servfd,&fdw);
-  if(select(servfd + 1, &fdw, nullptr, nullptr, &timeo) > 0)
+  FD_SET(fd,&fdw);
+  if(select(fd + 1, &fdw, nullptr, nullptr, &timeo) > 0)
   {
 #define BUF_SIZE 1024
     unsigned char buf[BUF_SIZE];
     int nsize = 0;
-    ioctl(servfd, FIONREAD, &nsize);
+    ioctl(fd, FIONREAD, &nsize);
     int Count = nsize % BUF_SIZE;
     for (int j = 0; j <= Count; j++)
     {
       auto toRead = nsize > BUF_SIZE ? BUF_SIZE : nsize;
       nsize -= BUF_SIZE;
-      auto size = ::read(servfd, buf, toRead);
+      auto size = ::read(fd, buf, toRead);
       if (size <= 0) break;
       for (int i = 0; i < size; i++)
         recvBuf.push_back(buf[i]);
@@ -429,7 +439,7 @@ cptResultCode_t CmpOffloadingCil::exec(std::map<std::string,const CComVar*>& inp
       }
     }
   }
-  else if (sendPack(pack, timeo))
+  else if (sendPack(servfd, pack, timeo))
   {
     if (pack.status() == ProPack::STATUS_OK)
     {
@@ -519,20 +529,22 @@ bool CmpOffloadingCil::reFreshServIP()
 {
   if (centerServIp) //如果有中心调度服务器
   {
-    if (centerServfd >= 0 || connectToServ())
+    if (centerServfd >= 0 || connectToCenterServ())
     {
       ProPack pack;
       pack.generate(ProPack::CMD_GET_IP);
       timeval timeo = {.tv_sec = REFREASH_IP_TIME_OUT/1000, .tv_usec = (REFREASH_IP_TIME_OUT%1000) * 1000};
-      if (sendPack(pack, timeo)) //从中心调度服务器获取新的卸载服务器ip
+      if (sendPack(centerServfd, pack, timeo)) //从中心调度服务器获取新的卸载服务器ip
       {
         if (pack.status() == ProPack::STATUS_OK)
         {
           auto&& temp = pack.data();
           decltype(servIP) newServIP = (static_cast<unsigned int>(temp[3]) << 24) + (static_cast<int>(temp[2]) << 16) + \
                     (static_cast<unsigned int>(temp[1]) << 8) + (static_cast<unsigned int>(temp[0]));
+          if (newServIP == 0) newServIP = centerServIp; //当返回ip为0.0.0.0时，代表centerServ自己
           if (newServIP != servIP) //新的IP地址，如果变更了需要将现有的连接关闭
           {
+            servIP = newServIP;
             close(servfd);
             servfd = -1;
           }

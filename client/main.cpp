@@ -1,7 +1,7 @@
 /*
  * @Author Shi Zhangkun
  * @Date 2021-02-04 11:14:24
- * @LastEditTime 2021-11-22 19:03:14
+ * @LastEditTime 2021-11-25 15:45:59
  * @LastEditors Shi Zhangkun
  * @Description none
  * @FilePath /cmp_offloading/client/main.cpp
@@ -70,7 +70,7 @@ int main(int args, const char** argv){
   
   
   std::cout << "Exec scripts : " << name << " to : " << url << ", path : " << path << " , counts : " << counts << std::endl;
-	CmpOffloadingCil cli(url);
+	CmpOffloadingCil cli(url,true);
   std::map<std::string, CComVar> outputs;
   CComVar test1(DEVICE_DATA,"testInt");
   test1.setValue(100);
