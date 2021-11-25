@@ -1,16 +1,17 @@
 /*
  * @Author Shi Zhangkun
  * @Date 2021-02-04 11:14:24
- * @LastEditTime 2021-10-12 17:52:06
+ * @LastEditTime 2021-11-25 17:49:32
  * @LastEditors Shi Zhangkun
  * @Description none
- * @FilePath /server/main.cpp
+ * @FilePath /cmp_offloading/server/main.cpp
  */
 
 #include "eventHandler.h"
 #include "eventLoop.h"
 #include "scheduler.h"
 #include "fdOperate.hpp"
+#include "cpuInfo.h"
 #include <iostream>
 #include <vector>
 #include <queue>
@@ -119,7 +120,7 @@ int main(int argc, const char* argv[])
   std::shared_ptr<EventLoop> pLoop = std::make_shared<EventLoop>();
   pLoop->addEventHandler(HANDLER_ACCEPT, std::make_unique<EventHandlerAccept>(0));
   pLoop->addEventHandler(HANDLER_SCH_ACCEPT, std::make_unique<EventHandlerSchedAccept>(0));
-  pLoop->addEventHandler(HANDLER_CMD, std::make_unique<EventHandlerCMD>(8));
+  pLoop->addEventHandler(HANDLER_CMD, std::make_unique<EventHandlerCMD>(CPUInfo::processors()));
   pLoop->addEventHandler(HANDLER_REPLY, std::make_unique<EventHandlerReply>(0));
   pLoop->addEventHandler(HANDLER_CLOSE, std::make_unique<EventHandlerClose>(0));
   pLoop->addEvent(std::move(acceptEvent));

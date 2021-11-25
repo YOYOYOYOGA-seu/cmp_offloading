@@ -1,10 +1,10 @@
 /*
  * @Author Shi Zhangkun
  * @Date 2021-10-09 16:48:37
- * @LastEditTime 2021-10-12 14:24:26
+ * @LastEditTime 2021-11-25 18:09:15
  * @LastEditors Shi Zhangkun
  * @Description none
- * @FilePath /server/inc/scheduler.h
+ * @FilePath /cmp_offloading/server/inc/scheduler.h
  */
 #ifndef __SCHEDULER_H
 #define __SCHEDULER_H
@@ -26,7 +26,8 @@ class Scheduler
     int fd;
     unsigned short port;
     unsigned int ipv4;
-    unsigned int load;
+    double load;
+    unsigned int processors;
     int faildCount = 0;
   };
 private:

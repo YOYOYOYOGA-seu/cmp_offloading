@@ -1,15 +1,17 @@
 /*
  * @Author Shi Zhangkun
  * @Date 2021-10-09 16:48:01
- * @LastEditTime 2021-10-12 17:36:57
+ * @LastEditTime 2021-11-25 18:21:22
  * @LastEditors Shi Zhangkun
  * @Description none
- * @FilePath /server/src/shceduler.cpp
+ * @FilePath /cmp_offloading/server/src/shceduler.cpp
  */
 
+#include "config.h"
 #include "scheduler.h"
 #include "fdOperate.hpp"
 #include "cmpOffProto.hpp"
+#include "cpuInfo.h"
 #include <limits>
 #include <iostream>
 #include <fstream>
@@ -39,7 +41,7 @@ bool Scheduler::addServer(int fd, unsigned short port, unsigned int ipv4)
 {
   if (!ifRun) return false;
 
-  struct ServerDesc serv{.fd = fd, .port = port, .ipv4 = ipv4, .load = 0xFFFFFFFF};
+  struct ServerDesc serv{.fd = fd, .port = port, .ipv4 = ipv4, .load = 0xFFFFFFFF, .processors = 1};
   servsMut.lock();
   servs.push_back(serv);
   servsMut.unlock();
@@ -152,9 +154,11 @@ void Scheduler::tickThreadFunc()
           if (ack.ifVaild() && ack.cmd() == ProPack::CMD_GET_LOAD_INFO)
           {
             auto data = ack.data();
-            serv.load = static_cast<unsigned int>(data[0]) + static_cast<unsigned int>(data[1] << 8) \
+            auto loadPercents = static_cast<unsigned int>(data[0]) + static_cast<unsigned int>(data[1] << 8) \
                         + static_cast<unsigned int>(data[2] << 16) \
                         + static_cast<unsigned int>(data[3] << 24);
+            serv.load = static_cast<double>(loadPercents)/100;
+            serv.processors = static_cast<unsigned int>(data[4]);
           }
           temp.recv.clear();
         }
@@ -169,21 +173,22 @@ void Scheduler::tickThreadFunc()
       }
       else
       {
-        std::ifstream loadavg("/proc/loadavg");
-        std::string avg;
-        loadavg >> avg;
-        serv.load = 100 * std::stod(avg);
+        serv.load = CPUInfo::avrgLoad_1min();
+        serv.processors = CPUInfo::processors();
+        if (serv.load < 0) serv.load = serv.processors; //发生错误，将其置为满负荷
       }
       itor = next;
     }
     servs.sort([](ServerDesc& a, ServerDesc& b){
-      return a.load <= b.load;
+      return a.load/a.processors <= b.load/b.processors;
     });
     for (auto& serv : servs)
     {
       in_addr temp;
       temp.s_addr = serv.ipv4;
-      std::cout << inet_ntoa(temp) << ':' << serv.port << '<' << serv.load << '>' << "\t";
+#if ECHO_SERV_MSG
+      std::cout << inet_ntoa(temp) << ':' << serv.port << '<' << serv.load << ':' << serv.processors << '>' << "\t";
+#endif
     }
     std::cout << std::endl;
     threadWait.try_lock_for(std::chrono::seconds(5));

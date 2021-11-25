@@ -1,7 +1,7 @@
 /*
  * @Author Shi Zhangkun
  * @Date 2021-09-13 16:06:03
- * @LastEditTime 2021-11-23 16:56:31
+ * @LastEditTime 2021-11-25 18:16:45
  * @LastEditors Shi Zhangkun
  * @Description none
  * @FilePath /cmp_offloading/server/src/cmdHandler.cpp
@@ -11,6 +11,7 @@
 #include "cmpOffProto.hpp"
 #include "base64.h"
 #include "scheduler.h"
+#include "cpuInfo.h"
 #include <iostream>
 #include <fstream>
 #include <unistd.h>
@@ -163,17 +164,16 @@ bool EventHandlerCMD::handler_callback(Event&& event, std::queue<Event>& waits)
     }
     else if (pack.cmd() == ProPack::CMD_GET_LOAD_INFO)  //获取当前服务器负载指令
     {
-      std::ifstream loadavg("/proc/loadavg");
-      unsigned int loadPercent;
-      if (loadavg.is_open())
+        
+      unsigned int loadPercent = 100 * CPUInfo::avrgLoad_1min();
+      auto processors = CPUInfo::processors();
+      if (loadPercent >= 0 && processors > 0)
       {
-        std::string avg;
-        loadavg >> avg;
-        loadPercent = 100 * std::stod(avg);
         std::vector<unsigned char> data = {static_cast<unsigned char>(0xFF&loadPercent), 
                                           static_cast<unsigned char>(0xFF&(loadPercent >> 8)),
                                           static_cast<unsigned char>(0xFF&(loadPercent >> 16)), 
-                                          static_cast<unsigned char>(0xFF&(loadPercent >> 24))};
+                                          static_cast<unsigned char>(0xFF&(loadPercent >> 24)),
+                                          static_cast<unsigned char>(0xFF&processors)};
         pack.generate(ProPack::CMD_GET_LOAD_INFO, std::move(data), true);
       }
       else
